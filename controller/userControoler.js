@@ -1,4 +1,5 @@
 const userModal = require("../modal/user");
+const { baseModelName } = require("../modal/user");
 
 const storeUser = async (req, res) => {
   try {
@@ -9,10 +10,33 @@ const storeUser = async (req, res) => {
   } catch (error) {}
 };
 
+// db.users.find({
+//   "$expr": { 
+//       "$and": [
+//            { "$eq": [ { "$dayOfMonth": "$dob" }, { "$dayOfMonth": new Date() } ] },
+//            { "$eq": [ { "$month"     : "$dob" }, { "$month"     : new Date() } ] }
+//       ]
+//    }
+// });
 const getUsers = async (req, res) => {
+  let name=[]
   try {
-    const users = await userModal.find({});
-    res.status(200).send(users);
+    const users = await userModal.aggregate([
+      { 
+        $match: {
+          $expr: {
+            $and: [
+              { $eq: [{ $dayOfMonth: '$DOB' }, { $dayOfMonth: new Date() }] },
+              { $eq: [{ $month: '$DOB' }, { $month: new Date() }] },
+            ],
+          },
+        }
+      }
+    ])
+    users.map(user=>{
+      name.push(user.name)
+    })
+    res.status(200).send(name);
     console.log(users)
     for (let key in users) {
       console.log(key)
@@ -24,7 +48,9 @@ const getUsers = async (req, res) => {
       }
     }
     console.log(users)
-  } catch (error) {}
+  } catch (error) {
+    console.log(error)
+  }
 };
 
 
